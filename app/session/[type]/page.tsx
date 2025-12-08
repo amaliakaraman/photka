@@ -14,7 +14,7 @@ export default function SessionPage({ params }: PageProps) {
   const router = useRouter()
   const { type } = use(params)
 
-  // Validate session type
+  // validate session type
   if (!isValidSessionType(type)) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
@@ -47,7 +47,7 @@ export default function SessionPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       
-      {/* Noise texture overlay */}
+      {/* noise texture overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-[0.015] z-50"
         style={{
@@ -55,7 +55,7 @@ export default function SessionPage({ params }: PageProps) {
         }}
       />
 
-      {/* Animated gradient orbs */}
+      {/* animated gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-blue-500/30 blur-[120px]"
@@ -97,9 +97,9 @@ export default function SessionPage({ params }: PageProps) {
         />
       </div>
 
-      {/* Content */}
+      {/* content */}
       <div className="relative z-10 min-h-screen flex flex-col px-4 pt-6 pb-8">
-        {/* Back button */}
+        {/* back button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -126,16 +126,16 @@ export default function SessionPage({ params }: PageProps) {
           </Link>
         </motion.div>
 
-        {/* Hero Card */}
+        {/* hero card */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="flex-1 flex flex-col"
         >
-          {/* Glassmorphism Card */}
+          {/* glassmorphism card */}
           <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-            {/* Title */}
+            {/* title */}
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                 {session.title}
@@ -145,12 +145,12 @@ export default function SessionPage({ params }: PageProps) {
               </p>
             </div>
 
-            {/* Blurb */}
+            {/* blurb */}
             <p className="text-neutral-300 text-center mb-8 leading-relaxed">
               {session.blurb}
             </p>
 
-            {/* Stats Grid */}
+            {/* stats grid */}
             <div className="grid grid-cols-3 gap-3 mb-8">
               <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-center">
                 <p className="text-[10px] text-blue-300/50 uppercase tracking-wider mb-1">
@@ -176,7 +176,7 @@ export default function SessionPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Best For Section */}
+            {/* best for section */}
             <div className="mb-6">
               <h3 className="text-[10px] text-blue-300/50 uppercase tracking-wider mb-3">
                 Best for
@@ -203,7 +203,7 @@ export default function SessionPage({ params }: PageProps) {
           </div>
         </motion.div>
 
-        {/* CTA Button */}
+        {/* cta button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

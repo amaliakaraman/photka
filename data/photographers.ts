@@ -37,17 +37,6 @@ export const PHOTOGRAPHERS: Photographer[] = [
     eta: 12,
     distance: 2.4,
   },
-  {
-    id: "ph_3",
-    name: "Haley Murphy",
-    photo: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=200&fit=crop&crop=face",
-    rating: 5.0,
-    totalShoots: 89,
-    cameraBodies: ["Fuji X-T5", "iPhone 15 Pro Max"],
-    specialties: ["Action", "Editorial"],
-    eta: 5,
-    distance: 0.8,
-  },
 ]
 
 export function getNearestPhotographer(userCoords?: { lat: number; lng: number } | null): Photographer {

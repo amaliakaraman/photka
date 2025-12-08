@@ -30,7 +30,6 @@ function ScheduleFlow() {
   const photographers = [
     { id: "nic-noel", name: "Nic Noel", specialty: "Lifestyle & Portraits", rating: 4.9 },
     { id: "amalia-karaman", name: "Amalia Karaman", specialty: "Events & Weddings", rating: 4.8 },
-    { id: "haley-murphy", name: "Haley Murphy", specialty: "Action & Editorial", rating: 5.0 },
   ]
 
   // get preselected session type from query params

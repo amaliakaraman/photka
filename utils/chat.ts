@@ -39,16 +39,27 @@ export function isUserConfirmation(messageText: string, recommendedSessionType: 
   const lower = messageText.toLowerCase()
   
   // explicit confirmations
-  if (lower.includes("yes") || lower.includes("yeah") || lower.includes("yep") || lower.includes("sure") || lower.includes("ok") || lower.includes("okay") || lower.includes("let's do it") || lower.includes("let's go")) {
+  const confirmationPhrases = [
+    "yes", "yeah", "yep", "sure", "ok", "okay", "okey", 
+    "let's do it", "let's go", "sounds good", "that works", 
+    "perfect", "great", "i'll take it", "i want that", 
+    "i'd like that", "that's what i want", "go ahead", 
+    "book it", "let's book", "i'm in", "count me in",
+    "my marketing team", "they'll handle it", "they can edit"
+  ]
+  
+  const hasConfirmation = confirmationPhrases.some(phrase => lower.includes(phrase))
+  
+  if (hasConfirmation) {
     // if they mention a different session type, it's not a confirmation for the recommended one
     if (recommendedSessionType) {
       if (recommendedSessionType === "iphone" && (lower.includes("dslr") || lower.includes("edited") || lower.includes("raw"))) {
         return false
       }
-      if (recommendedSessionType === "raw_dslr" && (lower.includes("iphone") || lower.includes("edited"))) {
+      if (recommendedSessionType === "raw_dslr" && (lower.includes("iphone") || lower.includes("edited dslr"))) {
         return false
       }
-      if (recommendedSessionType === "edited_dslr" && (lower.includes("iphone") || lower.includes("raw"))) {
+      if (recommendedSessionType === "edited_dslr" && (lower.includes("iphone") || lower.includes("raw dslr") || lower.includes("raw"))) {
         return false
       }
     }
@@ -84,22 +95,52 @@ export function getUserTimingPreference(messageText: string): "now" | "later" | 
 export function detectUserSessionPreference(messageText: string): string | null {
   const lower = messageText.toLowerCase()
   
+  // check for edited dslr first (to avoid conflicts with raw)
+  if (lower.includes("edited dslr") || (lower.includes("edited") && !lower.includes("raw"))) {
+    return "edited_dslr"
+  }
+  
+  // check for raw dslr or just "raw" (common shorthand)
+  // match "raw" as a word (with word boundaries or followed by space/comma)
+  if (lower.includes("raw dslr") || 
+      lower.includes("raw files") ||
+      lower.includes("raw file") ||
+      lower.match(/\braw\b/) ||
+      lower.includes(" raw ") || 
+      lower.startsWith("raw ") || 
+      lower.endsWith(" raw") || 
+      lower === "raw") {
+    return "raw_dslr"
+  }
+  
   // check for iphone (handle typos like "iphonw", "iphne", "iphon", etc.)
   // match "iph" followed by any characters that could be "one" or typos
   if (lower.match(/iph[o0nw]*/) || lower.includes("iphone") || lower.includes("iphon")) {
     return "iphone"
   }
   
-  // check for raw dslr
-  if (lower.includes("raw dslr") || (lower.includes("raw") && !lower.includes("edited"))) {
-    return "raw_dslr"
-  }
-  
-  // check for edited dslr
-  if (lower.includes("edited dslr") || (lower.includes("edited") && !lower.includes("raw"))) {
-    return "edited_dslr"
-  }
-  
   return null
+}
+
+// detect if ai message asks about editing preference (for raw dslr)
+export function isEditingPreferenceQuestion(messageText: string): boolean {
+  const lower = messageText.toLowerCase()
+  return lower.includes("prefer our photka team to edit") ||
+         lower.includes("raw files so your marketing team") ||
+         lower.includes("photka team to edit the photos") ||
+         lower.includes("marketing team can edit them")
+}
+
+// detect if user answered the editing preference question
+export function hasAnsweredEditingPreference(messageText: string): boolean {
+  const lower = messageText.toLowerCase()
+  return lower.includes("marketing team") ||
+         lower.includes("my team") ||
+         lower.includes("they'll") ||
+         lower.includes("they can") ||
+         lower.includes("photka team") ||
+         lower.includes("you can edit") ||
+         lower.includes("raw files") ||
+         lower.includes("raw file")
 }
 

@@ -5,12 +5,52 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Message } from "@/types/message"
-import { AI_SUPPORT_UUID, getWelcomeMessage, formatDateHeader, isDifferentDay } from "@/constants/chat"
-import { getSupportBookingId, formatMessageTime, detectSessionRecommendation, isUserConfirmation, isTimingQuestion, getUserTimingPreference, detectUserSessionPreference } from "@/utils/chat"
+import {
+  AI_SUPPORT_UUID,
+  getWelcomeMessage,
+  formatDateHeader,
+  isDifferentDay,
+} from "@/constants/chat"
+import {
+  getSupportBookingId,
+  formatMessageTime,
+  detectSessionRecommendation,
+  isUserConfirmation,
+  isTimingQuestion,
+  getUserTimingPreference,
+  detectUserSessionPreference,
+  isEditingPreferenceQuestion,
+  hasAnsweredEditingPreference,
+} from "@/utils/chat"
 
 interface SupportChatViewProps {
   onBack: () => void
-  onMessageSent?: () => void // optional - support chat is client-side only
+  onMessageSent?: () => void
+}
+
+const SESSION_LABELS: Record<string, string> = {
+  iphone: "iPhone Session",
+  raw_dslr: "RAW DSLR Session",
+  edited_dslr: "Edited DSLR Session",
+}
+
+// helper to create message objects
+function createMessage(
+  id: string,
+  bookingId: string,
+  senderId: string,
+  text: string
+): Message {
+  return {
+    id,
+    booking_id: bookingId,
+    sender_id: senderId,
+    receiver_id: null,
+    message_text: text,
+    created_at: new Date().toISOString(),
+    read_at: null,
+    attachments: [],
+  }
 }
 
 export function SupportChatView({ onBack }: SupportChatViewProps) {
@@ -34,159 +74,113 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
 
   useEffect(() => {
     if (!user?.id) return
-    
-    // no database - just show welcome message
+
     const userName = user.user_metadata?.full_name?.split(" ")[0] || "there"
     const welcomeMessage = getWelcomeMessage(userName)
     const supportBookingId = getSupportBookingId(user.id)
-    
-    const tempWelcome: Message = {
-      id: `welcome-${Date.now()}`,
-      booking_id: supportBookingId,
-      sender_id: AI_SUPPORT_UUID,
-      receiver_id: null,
-      message_text: welcomeMessage,
-      created_at: new Date().toISOString(),
-      read_at: null,
-      attachments: [],
-    }
-    
-    setMessages([tempWelcome])
+    const welcomeMsg = createMessage(
+      `welcome-${Date.now()}`,
+      supportBookingId,
+      AI_SUPPORT_UUID,
+      welcomeMessage
+    )
+
+    setMessages([welcomeMsg])
     setLoading(false)
   }, [user])
 
-  // no database cleanup needed - messages are only in local state
+  const getErrorMessage = (errorData: any): string => {
+    if (!errorData?.error) {
+      return "I'm having trouble responding right now. Please try again in a moment."
+    }
+    if (errorData.error.includes("not configured")) {
+      return "The support chat is currently being set up. Please contact support directly or try again later."
+    }
+    if (errorData.error.includes("Failed to get AI response")) {
+      return "I'm having trouble connecting right now. Please try again in a moment."
+    }
+    return errorData.error
+  }
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user?.id || sending) return
 
     setSending(true)
+    const messageText = newMessage.trim()
+    const supportBookingId = getSupportBookingId(user.id)
+
+    const userMsg = createMessage(
+      `user-${Date.now()}`,
+      supportBookingId,
+      user.id,
+      messageText
+    )
+
+    setNewMessage("")
+    setMessages(prev => [...prev, userMsg])
+    scrollToBottom()
+
+    setIsAITyping(true)
     try {
-      // no database - just add message to local state
-      const messageText = newMessage.trim()
-      const supportBookingId = getSupportBookingId(user.id)
-      
-      // add user message to ui immediately (no database save)
-      const tempUserMessage: Message = {
-        id: `user-${Date.now()}`,
-        booking_id: supportBookingId,
-        sender_id: user.id,
-        receiver_id: null,
-        message_text: messageText,
-        created_at: new Date().toISOString(),
-        read_at: null,
-        attachments: [],
-      }
-      
-      setNewMessage("")
-      setMessages(prev => [...prev, tempUserMessage])
-      scrollToBottom()
+      const conversationHistory = messages
+        .filter(msg => !msg.id.startsWith("welcome-") && !msg.id.startsWith("error-"))
+        .slice(-10)
+        .map(msg => ({
+          role: msg.sender_id === user.id ? "user" : "assistant",
+          content: msg.message_text,
+        }))
 
-      // get ai response
-      setIsAITyping(true)
-      try {
-        // build conversation history from existing messages (excluding welcome message and errors)
-        const conversationHistory = messages
-          .filter(msg => !msg.id.startsWith("welcome-") && !msg.id.startsWith("error-"))
-          .slice(0, 10) // limit to last 10 messages
-          .map(msg => ({
-            role: msg.sender_id === user.id ? "user" : "assistant",
-            content: msg.message_text
-          }))
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: messageText,
+          userId: user.id,
+          bookingId: supportBookingId,
+          saveToDatabase: false,
+          conversationHistory,
+        }),
+      })
 
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: messageText,
-            userId: user.id,
-            bookingId: supportBookingId,
-            saveToDatabase: false, // don't save to database
-            conversationHistory: conversationHistory, // send client-side history
-          }),
-        })
-
-        if (response.ok) {
-          const { message, messageId } = await response.json()
-          
-          // create ai message object
-          const aiMessage: Message = {
-            id: messageId || `ai-${Date.now()}`,
-            booking_id: supportBookingId,
-            sender_id: AI_SUPPORT_UUID,
-            receiver_id: null,
-            message_text: message,
-            created_at: new Date().toISOString(),
-            read_at: null,
-            attachments: [],
-          }
-
-          setMessages(prev => [...prev, aiMessage])
-          setIsAITyping(false)
-          scrollToBottom()
-          // don't call onMessageSent since we're not saving to database
-        } else {
-          // try to get error details from response
-          let errorMessage = "I'm having trouble responding right now. Please try again in a moment."
-          
-          try {
-            const errorData = await response.json()
-            console.error("AI response error:", response.status, errorData)
-            
-            // show more helpful error messages based on the error
-            if (errorData.error) {
-              if (errorData.error.includes("not configured")) {
-                errorMessage = "The support chat is currently being set up. Please contact support directly or try again later."
-              } else if (errorData.error.includes("Failed to get AI response")) {
-                errorMessage = "I'm having trouble connecting right now. Please try again in a moment."
-              } else {
-                errorMessage = errorData.error
-              }
-            }
-          } catch (parseError) {
-            // if we can't parse the error, use default message
-            console.error("AI response error (could not parse):", response.status, parseError)
-          }
-          
-          // show helpful error message to user
-          const errorMsg: Message = {
-            id: `error-${Date.now()}`,
-            booking_id: supportBookingId,
-            sender_id: AI_SUPPORT_UUID,
-            receiver_id: null,
-            message_text: errorMessage,
-            created_at: new Date().toISOString(),
-            read_at: null,
-            attachments: [],
-          }
-          setMessages(prev => [...prev, errorMsg])
-          setIsAITyping(false)
-          scrollToBottom()
+      if (response.ok) {
+        const { message, messageId } = await response.json()
+        const aiMsg = createMessage(
+          messageId || `ai-${Date.now()}`,
+          supportBookingId,
+          AI_SUPPORT_UUID,
+          message
+        )
+        setMessages(prev => [...prev, aiMsg])
+      } else {
+        let errorMessage = "I'm having trouble responding right now. Please try again in a moment."
+        try {
+          const errorData = await response.json()
+          console.error("AI response error:", response.status, errorData)
+          errorMessage = getErrorMessage(errorData)
+        } catch {
+          console.error("AI response error (could not parse):", response.status)
         }
-      } catch (aiError) {
-        console.error("AI chat error:", aiError)
-        setIsAITyping(false)
-        // show helpful error message to user
-        const errorMessage: Message = {
-          id: `error-${Date.now()}`,
-          booking_id: supportBookingId,
-          sender_id: AI_SUPPORT_UUID,
-          receiver_id: null,
-          message_text: "I'm having trouble responding right now. Please try again in a moment.",
-          created_at: new Date().toISOString(),
-          read_at: null,
-          attachments: [],
-        }
-        setMessages(prev => [...prev, errorMessage])
-        scrollToBottom()
+        const errorMsg = createMessage(
+          `error-${Date.now()}`,
+          supportBookingId,
+          AI_SUPPORT_UUID,
+          errorMessage
+        )
+        setMessages(prev => [...prev, errorMsg])
       }
     } catch (error) {
-      console.error("Error sending message:", error)
-      alert("Failed to send message. Please try again.")
+      console.error("AI chat error:", error)
+      const errorMsg = createMessage(
+        `error-${Date.now()}`,
+        supportBookingId,
+        AI_SUPPORT_UUID,
+        "I'm having trouble responding right now. Please try again in a moment."
+      )
+      setMessages(prev => [...prev, errorMsg])
     } finally {
+      setIsAITyping(false)
       setSending(false)
+      scrollToBottom()
       inputRef.current?.focus()
     }
   }
@@ -198,18 +192,64 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
     }
   }
 
-  // don't block rendering on loading - show messages as they load
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen bg-black text-white flex items-center justify-center">
-  //       <div className="animate-pulse text-neutral-400">Loading...</div>
-  //     </div>
-  //   )
-  // }
+  const shouldShowBookingButtons = (
+    message: Message,
+    messageIndex: number,
+    allMessages: Message[]
+  ): { show: boolean; session: string | null; timing: "now" | "later" | null } => {
+    const messagesBefore = allMessages.slice(0, messageIndex)
+    const recentUserMessage = messagesBefore
+      .filter(msg => msg.sender_id === user?.id)
+      .slice(-1)[0]
+
+    if (!recentUserMessage) return { show: false, session: null, timing: null }
+
+    const aiMessagesBefore = messagesBefore.filter(msg => msg.sender_id === AI_SUPPORT_UUID)
+    const aiRecommendedSession =
+      aiMessagesBefore
+        .map(msg => detectSessionRecommendation(msg.message_text))
+        .find(pref => pref !== null) || detectSessionRecommendation(message.message_text)
+
+    const aiIsAskingTiming = isTimingQuestion(message.message_text)
+    const editingQuestionAsked =
+      aiMessagesBefore.some(msg => isEditingPreferenceQuestion(msg.message_text)) ||
+      isEditingPreferenceQuestion(message.message_text)
+    const editingPreferenceAnswered = hasAnsweredEditingPreference(recentUserMessage.message_text)
+    const userSessionPreference = detectUserSessionPreference(recentUserMessage.message_text)
+    const userTimingPreference = getUserTimingPreference(recentUserMessage.message_text)
+
+    const confirmationPhrases = ["yes", "yeah", "sure", "ok", "let's", "sounds good", "that works", "perfect"]
+    const hasConfirmation = confirmationPhrases.some(phrase =>
+      recentUserMessage.message_text.toLowerCase().includes(phrase)
+    )
+
+    const userConfirmed =
+      isUserConfirmation(recentUserMessage.message_text, aiRecommendedSession) ||
+      (userSessionPreference !== null && hasConfirmation)
+
+    const finalSession = userSessionPreference || aiRecommendedSession
+    const isRawDslr = finalSession === "raw_dslr"
+    const editingRequirementMet = !isRawDslr || !editingQuestionAsked || editingPreferenceAnswered
+    const timingRequirementMet = userTimingPreference !== null && !aiIsAskingTiming
+
+    const shouldShow = Boolean(
+      editingRequirementMet &&
+      timingRequirementMet &&
+      finalSession &&
+      (userConfirmed ||
+        (userSessionPreference && userTimingPreference) ||
+        (userSessionPreference && aiRecommendedSession === userSessionPreference))
+    )
+
+    return {
+      show: shouldShow,
+      session: finalSession || null,
+      timing: userTimingPreference,
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen bg-black text-white pb-24">
-      {/* header */}
       <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button
@@ -230,7 +270,6 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
         </div>
       </div>
 
-      {/* messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {loading && messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -252,17 +291,15 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
               const isOwn = message.sender_id === user?.id
               const isAI = message.sender_id === AI_SUPPORT_UUID
               const timestamp = formatMessageTime(message.created_at)
-              
-              // check if we need to show a date header
-              const previousMessage = index > 0 ? messages.filter(m => m && m.sender_id)[index - 1] : null
-              const showDateHeader = !previousMessage || isDifferentDay(
-                new Date(message.created_at),
-                new Date(previousMessage.created_at)
-              )
+
+              const validMessages = messages.filter(m => m && m.sender_id)
+              const previousMessage = index > 0 ? validMessages[index - 1] : null
+              const showDateHeader =
+                !previousMessage ||
+                isDifferentDay(new Date(message.created_at), new Date(previousMessage.created_at))
               
               return (
                 <div key={message.id}>
-                  {/* date separator */}
                   {showDateHeader && (
                     <div className="flex items-center justify-center my-6">
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
@@ -301,78 +338,48 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
                       </p>
                     </div>
                     
-                    {/* booking buttons - show after user states session + timing */}
                     {isAI && (() => {
                       const messageIndex = messages.findIndex(m => m.id === message.id)
-                      const messagesBefore = messages.slice(0, messageIndex)
-                      
-                      // check all user messages before this ai message for session and timing preferences
-                      const userMessagesBefore = messagesBefore.filter(msg => msg.sender_id === user?.id)
-                      const userSessionPreference = userMessagesBefore
-                        .map(msg => detectUserSessionPreference(msg.message_text))
-                        .find(pref => pref !== null)
-                      
-                      const userTimingPreference = userMessagesBefore
-                        .map(msg => getUserTimingPreference(msg.message_text))
-                        .find(pref => pref !== null)
-                      
-                      // also check ai's recommendation/acknowledgment in this message
-                      const aiRecommendedSession = detectSessionRecommendation(message.message_text)
-                      
-                      // final session: user preference takes priority, then ai recommendation
-                      const finalSession = userSessionPreference || aiRecommendedSession
-                      
-                      // show button if: user has stated both session and timing preferences
-                      // this ensures button appears even if ai doesn't explicitly mention the session in this message
-                      if (userSessionPreference && userTimingPreference) {
-                        const sessionLabels: Record<string, string> = {
-                          iphone: "iPhone Session",
-                          raw_dslr: "RAW DSLR Session",
-                          edited_dslr: "Edited DSLR Session"
-                        }
-                        
-                        // use user's explicit preference, not ai's recommendation
-                        const sessionToBook = userSessionPreference
-                        
-                        return (
-                          <div className="mt-3 space-y-2">
-                            {userTimingPreference === "now" ? (
+                      const { show, session, timing } = shouldShowBookingButtons(message, messageIndex, messages)
+
+                      if (!show || !session) return null
+
+                      return (
+                        <div className="mt-3 space-y-2">
+                          {timing === "now" ? (
+                            <button
+                              onClick={() => router.push(`/book?session_type=${session}`)}
+                              className="w-full px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition"
+                            >
+                              Book {SESSION_LABELS[session]} Now
+                            </button>
+                          ) : timing === "later" ? (
+                            <button
+                              onClick={() => router.push(`/schedule?session_type=${session}`)}
+                              className="w-full px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition"
+                            >
+                              Schedule {SESSION_LABELS[session]}
+                            </button>
+                          ) : (
+                            <>
                               <button
-                                onClick={() => router.push(`/book?session_type=${sessionToBook}`)}
+                                onClick={() => router.push(`/book?session_type=${session}`)}
                                 className="w-full px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition"
                               >
-                                Book {sessionLabels[sessionToBook]} Now
+                                Book {SESSION_LABELS[session]} Now
                               </button>
-                            ) : userTimingPreference === "later" ? (
                               <button
-                                onClick={() => router.push(`/schedule?session_type=${sessionToBook}`)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition"
+                                onClick={() => router.push(`/schedule?session_type=${session}`)}
+                                className="w-full px-4 py-2.5 rounded-xl bg-white/[0.08] border border-white/[0.1] text-white text-sm font-medium hover:bg-white/[0.12] transition"
                               >
-                                Schedule {sessionLabels[sessionToBook]}
+                                Schedule {SESSION_LABELS[session]}
                               </button>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => router.push(`/book?session_type=${sessionToBook}`)}
-                                  className="w-full px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition"
-                                >
-                                  Book {sessionLabels[sessionToBook]} Now
-                                </button>
-                                <button
-                                  onClick={() => router.push(`/schedule?session_type=${sessionToBook}`)}
-                                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.08] border border-white/[0.1] text-white text-sm font-medium hover:bg-white/[0.12] transition"
-                                >
-                                  Schedule {sessionLabels[sessionToBook]}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )
-                      }
-                      return null
+                            </>
+                          )}
+                        </div>
+                      )
                     })()}
                     
-                    {/* timestamp under message - left aligned for ai, right aligned for user */}
                     <span className={`text-[10px] text-neutral-500 mt-1 ${isOwn ? "text-right" : "text-left"}`}>
                       {timestamp}
                     </span>
@@ -381,7 +388,6 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
               )
             })}
             
-            {/* typing indicator - iMessage style */}
             {isAITyping && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -423,7 +429,6 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* input */}
       <div className="sticky bottom-0 z-10 bg-black/95 backdrop-blur-xl border-t border-white/10 p-4 pb-24 flex-shrink-0">
         <div className="flex items-end gap-3">
           <textarea

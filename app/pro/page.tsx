@@ -18,7 +18,7 @@ const perks = [
   {
     icon: "🖼️",
     title: "10 Free Edited Images",
-    description: "Every RAW DSLR session includes 10 professionally edited selects at no extra cost.",
+    description: "Every RAW DSLR session includes 10 professionally edited selects at no extra cost. Get instant delivery on-site, then choose your favorites to be edited.",
   },
   {
     icon: "🎯",

@@ -17,8 +17,8 @@ after running nashphotoco in nashville for over five years, i noticed how outdat
 - **shoot now** — instant photographer matching for spontaneous shoots
 - **shoot later** — schedule sessions in advance with your preferred photographer
 - **three session types**:
-  - iphone session ($35–$60) — instant delivery, unedited
-  - raw dslr session ($65–$120) — full gallery in 24 hours
+  - iphone session ($35–$60) — casual, instant delivery, unedited
+  - raw dslr session ($65–$120) — professional grade, instant delivery on-site, full creative control for brand identity
   - edited dslr session ($85–$150) — curated, professionally edited
 - **ai support chat** — get instant help with bookings, pricing, and questions
 - **photka pro membership** — priority matching, discounts, and exclusive perks
@@ -49,7 +49,7 @@ after running nashphotoco in nashville for over five years, i noticed how outdat
 
 1. clone the repository:
 ```bash
-git clone https://github.com/amaliakaraman/photka-app.git
+git clone https://github.com/amaliakaraman/photka-app
 cd photka
 ```
 
