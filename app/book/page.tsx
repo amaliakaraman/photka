@@ -34,7 +34,7 @@ function BookingFlow() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const prevLocationRef = useRef<string>("")
 
-  // Google Places Autocomplete - Nashville biased
+  // google places autocomplete, nashville biased
   useEffect(() => {
     if (locationSearch.length < 2) {
       setLocationSuggestions([])
@@ -77,21 +77,21 @@ function BookingFlow() {
           setLocationSuggestions(suggestions.slice(0, 5))
         }
       } catch (err) {
-        // Silently ignore abort errors from cancelled requests
+        // silently ignore abort errors from cancelled requests
         if ((err as Error).name === "AbortError") return
       } finally {
         setIsLoadingSuggestions(false)
       }
     }
 
-    const timer = setTimeout(fetchSuggestions, 300) // Debounce 300ms
+    const timer = setTimeout(fetchSuggestions, 300) // debounce 300ms
     return () => {
       clearTimeout(timer)
       controller.abort()
     }
   }, [locationSearch])
 
-  // Get preselected session type from query params
+  // get preselected session type from query params
   const paramType = searchParams.get("session_type") || searchParams.get("type")
 
   useEffect(() => {
@@ -107,7 +107,7 @@ function BookingFlow() {
     }
   }, [user, loading, router])
 
-  // Geocode address when locationText changes (if not current location)
+  // geocode address when locationText changes (if not current location)
   useEffect(() => {
     if (
       locationText && 
@@ -142,7 +142,7 @@ function BookingFlow() {
     }
   }, [locationText, isCurrentLocation, selectedType])
 
-  // Find photographer after location is found and session is selected
+  // find photographer after location is found and session is selected
   useEffect(() => {
     if (userCoords && bookingState === "searching" && selectedType) {
       const timer = setTimeout(() => {
@@ -167,7 +167,7 @@ function BookingFlow() {
   async function handleConfirmBooking() {
     if (!user || !photographer || !selectedType) return
 
-    // Verify we have an active session
+    // verify we have an active session
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       alert("You must be logged in to create a booking. Redirecting to login...")
@@ -175,8 +175,8 @@ function BookingFlow() {
       return
     }
 
-    // check for existing instant bookings (requested status) - prevent multiple in queue
-    // exclude old bookings (older than 2 hours) - cancelled bookings are already excluded by status filter
+    // check for existing instant bookings (requested status), prevent multiple in queue
+    // exclude old bookings (older than 2 hours),cancelled bookings are already excluded by status filter
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     const { data: existingBookings } = await supabase
       .from("bookings")
@@ -251,7 +251,7 @@ function BookingFlow() {
 
       {/* Content Overlay */}
       <div className="relative z-10 flex flex-col h-full">
-        {/* Top Bar */}
+        {/* top bar */}
         <div className="p-4 pb-0">
           <div className="flex items-center justify-between mb-4">
             <Link
@@ -265,7 +265,7 @@ function BookingFlow() {
             </Link>
           </div>
 
-          {/* Now / Later Toggle */}
+          {/* now / later toggle */}
           <div className="flex bg-neutral-900/80 backdrop-blur-xl rounded-full p-1 border border-white/[0.06] mb-4">
             <button
               onClick={() => setBookingMode("now")}
@@ -295,7 +295,7 @@ function BookingFlow() {
             </button>
           </div>
 
-          {/* Combined Session + Location Card */}
+          {/* combined session + location card */}
           {currentSession && bookingState !== "selecting" && (
             <div className="z-30">
               <motion.div

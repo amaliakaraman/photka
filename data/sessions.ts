@@ -23,7 +23,7 @@ export const SESSIONS = {
     slug: "raw_dslr",
     blurb: "Full gallery with full creative freedom",
     price: "$65–$120",
-    delivery: "Same-day digital delivery",
+    delivery: "Instant delivery on-site",
     output: "Full RAW gallery (~100+ shots)",
     tagline: "Pro quality, your creative vision",
     accentColor: "from-violet-400 to-fuchsia-400",

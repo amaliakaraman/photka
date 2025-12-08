@@ -13,7 +13,7 @@ export interface Photographer {
   coords?: { lat: number; lng: number }
 }
 
-// Mock photographers - in production this would come from Supabase
+// mock photographers, in production this would come from supabase
 export const PHOTOGRAPHERS: Photographer[] = [
   {
     id: "ph_1",
@@ -54,11 +54,11 @@ export function getNearestPhotographer(userCoords?: { lat: number; lng: number }
   const randomPhotographer = PHOTOGRAPHERS[Math.floor(Math.random() * PHOTOGRAPHERS.length)]
   const randomEta = Math.floor(Math.random() * 6) + 10 // 10-15 minutes
   
-  // Generate photographer coords within radius of downtown Nashville
+  // generate photographer coords within radius of downtown nashville
   // 1 mile ≈ 0.0145 degrees (1 degree ≈ 69 miles)
   const maxOffset = PHOTOGRAPHER_RADIUS_MILES * 0.0145
-  const angle = Math.random() * 2 * Math.PI // Random angle
-  const distance = Math.random() * maxOffset // Random distance up to 3 miles
+  const angle = Math.random() * 2 * Math.PI // random angle
+  const distance = Math.random() * maxOffset // random distance up to 3 miles
   
   const photographerCoords = {
     lat: DOWNTOWN_NASHVILLE.lat + (distance * Math.cos(angle)),
@@ -68,7 +68,7 @@ export function getNearestPhotographer(userCoords?: { lat: number; lng: number }
   return {
     ...randomPhotographer,
     eta: randomEta,
-    distance: +(randomEta * 0.4 + Math.random()).toFixed(1), // Approximate distance based on ETA
+    distance: +(randomEta * 0.4 + Math.random()).toFixed(1), // approximate distance based on eta
     coords: photographerCoords,
   }
 }

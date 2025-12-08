@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabaseClient"
 
 export default function LoginPage() {
@@ -33,10 +34,66 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 relative overflow-hidden">
+      {/* animated blue/purple background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full bg-blue-500/20 blur-[120px]"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -80, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 -left-48 w-[500px] h-[500px] rounded-full bg-purple-500/20 blur-[120px]"
+          animate={{
+            x: [0, -80, 0],
+            y: [0, 100, 0],
+            scale: [1, 1.3, 1],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-cyan-500/15 blur-[100px]"
+          animate={{
+            x: [0, 60, 0],
+            y: [0, -60, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-1/4 left-1/3 w-[450px] h-[450px] rounded-full bg-violet-500/15 blur-[110px]"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, 70, 0],
+            scale: [1, 1.25, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Photka</h1>
+          <h1 className="text-3xl font-bold tracking-tight">photka</h1>
           <p className="text-neutral-400 mt-2">Sign in to your account</p>
         </div>
 

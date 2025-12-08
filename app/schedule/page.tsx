@@ -26,14 +26,14 @@ function ScheduleFlow() {
   const [showDateTimePicker, setShowDateTimePicker] = useState(false)
   const [dateTimePickerStep, setDateTimePickerStep] = useState<"date" | "time">("date")
 
-  // Available photographers
+  // available photographers
   const photographers = [
     { id: "nic-noel", name: "Nic Noel", specialty: "Lifestyle & Portraits", rating: 4.9 },
     { id: "amalia-karaman", name: "Amalia Karaman", specialty: "Events & Weddings", rating: 4.8 },
     { id: "haley-murphy", name: "Haley Murphy", specialty: "Action & Editorial", rating: 5.0 },
   ]
 
-  // Get preselected session type from query params
+  // get preselected session type from query params
   const paramType = searchParams.get("session_type") || searchParams.get("type")
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function ScheduleFlow() {
     }
   }, [user, loading, router])
 
-  // Generate time slots
+  // generate time slots
   const getTimeSlots = () => {
     const slots = []
     for (let hour = 8; hour <= 20; hour++) {
@@ -59,6 +59,21 @@ function ScheduleFlow() {
       }
     }
     return slots
+  }
+
+  // check if a time slot is available (80% should be busy)
+  const isTimeSlotAvailable = (time: string, date: string) => {
+    // use date and time as seed for consistent results
+    const seed = `${date}-${time}`
+    let hash = 0
+    for (let i = 0; i < seed.length; i++) {
+      const char = seed.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // convert to 32bit integer
+    }
+    // use hash to determine availability (20% available, 80% busy)
+    const normalized = Math.abs(hash) % 100
+    return normalized < 20
   }
 
   const formatDate = (date: Date) => {
@@ -85,7 +100,7 @@ function ScheduleFlow() {
     setStep("calendar")
   }
 
-  // Calendar helpers
+  // calendar helpers
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
     const month = date.getMonth()
@@ -96,12 +111,12 @@ function ScheduleFlow() {
     
     const days: (Date | null)[] = []
     
-    // Add empty slots for days before the first of the month
+    // add empty slots for days before the first of the month
     for (let i = 0; i < startingDay; i++) {
       days.push(null)
     }
     
-    // Add all days of the month
+    // add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i))
     }
@@ -130,7 +145,7 @@ function ScheduleFlow() {
   const goToPrevMonth = () => {
     const today = new Date()
     const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-    // Don't go before current month
+    // don't go before current month
     if (newMonth.getMonth() >= today.getMonth() || newMonth.getFullYear() > today.getFullYear()) {
       setCurrentMonth(newMonth)
     }
@@ -138,7 +153,7 @@ function ScheduleFlow() {
 
   const goToNextMonth = () => {
     const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-    // Allow up to 3 months ahead
+    // allow up to 3 months ahead
     const maxMonth = new Date()
     maxMonth.setMonth(maxMonth.getMonth() + 3)
     if (newMonth <= maxMonth) {
@@ -183,7 +198,12 @@ function ScheduleFlow() {
   }
 
   const currentSession = selectedType ? SESSIONS[selectedType] : null
-  const timeSlots = getTimeSlots()
+  const allTimeSlots = getTimeSlots()
+  
+  // filter to only show available time slots (20% available, 80% hidden)
+  const getAvailableTimeSlots = (date: string) => {
+    return allTimeSlots.filter(time => isTimeSlotAvailable(time, date))
+  }
 
   if (loading) {
     return (
@@ -197,12 +217,12 @@ function ScheduleFlow() {
     return null
   }
 
-  // Check if any dropdown is open to add extra scroll space
+  // check if any dropdown is open to add extra scroll space
   const isAnyDropdownOpen = showPhotographerDropdown || showSessionDropdown || showDateTimePicker
 
   return (
     <div className={`bg-black text-white min-h-screen ${isAnyDropdownOpen ? "pb-96" : "pb-24"}`}>
-      {/* Header */}
+      {/* header */}
       <div className="sticky top-0 z-20 bg-black/90 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
@@ -217,7 +237,7 @@ function ScheduleFlow() {
             </Link>
           </div>
 
-          {/* Now / Later Toggle */}
+          {/* now / later toggle */}
           <div className="flex bg-neutral-900/80 backdrop-blur-xl rounded-full p-1 border border-white/[0.06]">
             <button
               onClick={() => router.push("/book")}
@@ -237,10 +257,10 @@ function ScheduleFlow() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* content */}
       <div className="p-4">
         <AnimatePresence mode="wait">
-          {/* Step 1: Session Selection */}
+          {/* step 1: session selection */}
           {step === "session" && (
             <motion.div
               key="session"
@@ -279,7 +299,7 @@ function ScheduleFlow() {
             </motion.div>
           )}
 
-          {/* Step 2: Calendar View */}
+          {/* step 2: calendar view */}
           {step === "calendar" && currentSession && (
             <motion.div
               key="calendar"
@@ -287,7 +307,7 @@ function ScheduleFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {/* Selected Session Summary with Dropdown */}
+              {/* selected session summary with dropdown */}
               <div className="relative mb-6">
                 <div className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-300 p-[1px]">
                   <button
@@ -311,7 +331,7 @@ function ScheduleFlow() {
                   </button>
                 </div>
 
-                {/* Session Dropdown */}
+                {/* session dropdown */}
                 <AnimatePresence>
                   {showSessionDropdown && (
                     <motion.div
@@ -352,7 +372,7 @@ function ScheduleFlow() {
                 </AnimatePresence>
               </div>
 
-              {/* Monthly Calendar */}
+              {/* monthly calendar */}
               <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4">
                 {/* Month Navigation */}
                 <div className="flex items-center justify-between mb-4">
@@ -381,11 +401,11 @@ function ScheduleFlow() {
                     <div key={day} className="text-center text-xs text-neutral-500 font-medium py-2">
                       {day}
                     </div>
-                  ))}
-                </div>
+                            ))}
+                          </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1">
+                          {/* calendar grid */}
+                          <div className="grid grid-cols-7 gap-1">
                   {getDaysInMonth(currentMonth).map((date, idx) => {
                     if (!date) {
                       return <div key={`empty-${idx}`} className="aspect-square" />
@@ -422,7 +442,7 @@ function ScheduleFlow() {
             </motion.div>
           )}
 
-          {/* Step 3: Time Selection */}
+          {/* step 3: time selection */}
           {step === "time" && currentSession && (
             <motion.div
               key="time"
@@ -430,7 +450,7 @@ function ScheduleFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {/* Selected Date Header */}
+              {/* selected date header */}
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => {
@@ -455,7 +475,7 @@ function ScheduleFlow() {
               <p className="text-sm text-neutral-500 mb-4">All times in your local timezone</p>
 
               <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map((time) => (
+                {getAvailableTimeSlots(selectedDate).map((time) => (
                   <motion.button
                     key={time}
                     whileTap={{ scale: 0.95 }}
@@ -469,7 +489,7 @@ function ScheduleFlow() {
             </motion.div>
           )}
 
-          {/* Step 4: Shoot Details */}
+          {/* step 4: shoot details */}
           {step === "details" && currentSession && (
             <motion.div
               key="details"
@@ -477,7 +497,7 @@ function ScheduleFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {/* Summary Header */}
+              {/* summary header */}
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => {
@@ -498,7 +518,7 @@ function ScheduleFlow() {
                 </div>
               </div>
 
-              {/* Session Summary Card with Date/Time Picker */}
+              {/* session summary card with date/time picker */}
               <div className="relative mb-6">
                 <div className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-300 p-[1px]">
                   <div className="rounded-2xl bg-neutral-950/95 p-4">
@@ -533,7 +553,7 @@ function ScheduleFlow() {
                   </div>
                 </div>
 
-                {/* Date/Time Picker Dropdown */}
+                {/* date/time picker dropdown */}
                 <AnimatePresence>
                   {showDateTimePicker && (
                     <motion.div
@@ -543,7 +563,7 @@ function ScheduleFlow() {
                       transition={{ duration: 0.15 }}
                       className="absolute top-full left-0 right-0 mt-2 z-30 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/[0.08] overflow-hidden shadow-xl"
                     >
-                      {/* Step Indicator */}
+                      {/* step indicator */}
                       <div className="flex border-b border-white/[0.06]">
                         <button
                           onClick={() => setDateTimePickerStep("date")}
@@ -567,10 +587,10 @@ function ScheduleFlow() {
                         </button>
                       </div>
 
-                      {/* Date Selection */}
+                      {/* date selection */}
                       {dateTimePickerStep === "date" && (
                         <div className="p-4">
-                          {/* Month Navigation */}
+                          {/* month navigation */}
                           <div className="flex items-center justify-between mb-3">
                             <button
                               onClick={goToPrevMonth}
@@ -591,7 +611,7 @@ function ScheduleFlow() {
                             </button>
                           </div>
 
-                          {/* Day Labels */}
+                          {/* day labels */}
                           <div className="grid grid-cols-7 gap-1 mb-1">
                             {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
                               <div key={i} className="text-center text-[10px] text-neutral-500 font-medium py-1">
@@ -600,7 +620,7 @@ function ScheduleFlow() {
                             ))}
                           </div>
 
-                          {/* Calendar Grid */}
+                          {/* calendar grid */}
                           <div className="grid grid-cols-7 gap-1">
                             {getDaysInMonth(currentMonth).map((date, idx) => {
                               if (!date) {
@@ -636,11 +656,11 @@ function ScheduleFlow() {
                         </div>
                       )}
 
-                      {/* Time Selection */}
+                      {/* time selection */}
                       {dateTimePickerStep === "time" && (
                         <div className="p-4 max-h-64 overflow-y-auto">
                           <div className="grid grid-cols-3 gap-2">
-                            {timeSlots.map((time) => {
+                            {getAvailableTimeSlots(selectedDate).map((time) => {
                               const isSelected = selectedTime === time
                               return (
                                 <button
@@ -652,7 +672,7 @@ function ScheduleFlow() {
                                   className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all ${
                                     isSelected
                                       ? "bg-blue-500 border-blue-400 text-white"
-                                      : "bg-white/[0.03] border-white/[0.06] hover:border-blue-500/30 hover:bg-blue-500/10 text-neutral-300"
+                                      : "bg-white/[0.03] border-white/[0.06] hover:border-blue-500/30 hover:bg-blue-500/10 text-neutral-300 cursor-pointer"
                                   }`}
                                 >
                                   {formatTimeDisplay(time)}
@@ -667,7 +687,7 @@ function ScheduleFlow() {
                 </AnimatePresence>
               </div>
 
-              {/* Shoot Description - Required */}
+              {/* shoot description, required */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-lg font-semibold">Describe your shoot</h3>
@@ -688,7 +708,7 @@ function ScheduleFlow() {
                 )}
               </div>
 
-              {/* Preferred Photographer - Optional */}
+              {/* preferred photographer, optional */}
               <div className="mb-8 relative">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-lg font-semibold">Preferred photographer</h3>
@@ -732,7 +752,7 @@ function ScheduleFlow() {
                   </svg>
                 </button>
 
-                {/* Photographer Dropdown */}
+                {/* photographer dropdown */}
                 <AnimatePresence>
                   {showPhotographerDropdown && (
                     <motion.div
@@ -742,7 +762,7 @@ function ScheduleFlow() {
                       transition={{ duration: 0.15 }}
                       className="absolute top-full left-0 right-0 mt-2 z-30 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/[0.08] shadow-xl max-h-72 overflow-y-auto"
                     >
-                      {/* No preference option */}
+                      {/* no preference option */}
                       <button
                         onClick={() => {
                           setPreferredPhotographer("")
@@ -765,7 +785,7 @@ function ScheduleFlow() {
                         </div>
                       </button>
 
-                      {/* Photographer options */}
+                      {/* photographer options */}
                       {photographers.map((photographer) => {
                         const isSelected = preferredPhotographer === photographer.id
                         return (
@@ -802,7 +822,7 @@ function ScheduleFlow() {
                 </AnimatePresence>
               </div>
 
-              {/* Confirm Button */}
+              {/* confirm button */}
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleConfirmBooking}
@@ -825,7 +845,7 @@ function ScheduleFlow() {
             </motion.div>
           )}
 
-          {/* Step 3: Confirmation */}
+          {/* step 3: confirmation */}
           {step === "confirm" && currentSession && (
             <motion.div
               key="confirm"

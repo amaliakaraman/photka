@@ -16,7 +16,7 @@ interface MapViewProps {
   onLocationFound?: (coords: { lat: number; lng: number }) => void
   userCoords?: { lat: number; lng: number } | null
   photographerCoords?: { lat: number; lng: number } | null
-  photographerMatched?: boolean // New prop to reduce blur when matched
+  photographerMatched?: boolean // new prop to reduce blur when matched
 }
 
 export function MapView({ 
@@ -42,7 +42,7 @@ export function MapView({
   useEffect(() => {
     if (typeof window === "undefined" || mapsLoaded) return
 
-    // Check if script already exists
+    // check if script already exists
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
     if (existingScript) {
       if (window.google && window.google.maps) {
@@ -53,7 +53,7 @@ export function MapView({
       return
     }
 
-    // Check if Google Maps is already loaded
+    // check if google maps is already loaded
     if (window.google && window.google.maps) {
       setMapsLoaded(true)
       return
@@ -76,7 +76,7 @@ export function MapView({
     document.head.appendChild(script)
   }, [mapsLoaded])
 
-  // Initialize map
+  // initialize map
   useEffect(() => {
     if (!mapsLoaded || !mapRef.current || mapInstanceRef.current || typeof window === "undefined" || !window.google) return
 
@@ -84,13 +84,13 @@ export function MapView({
       center: NASHVILLE,
       zoom: 13,
       disableDefaultUI: true,
-      zoomControl: false, // No +/- buttons
+      zoomControl: false, // no +/- buttons
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
-      gestureHandling: "greedy", // Allow pinch-to-zoom (trackpad on macOS) and scroll
+      gestureHandling: "greedy", // allow pinch-to-zoom (trackpad on macos) and scroll
       styles: [
-        // Base styling - dark neutral
+        // base styling, dark neutral
         {
           featureType: "all",
           elementType: "geometry",
@@ -106,7 +106,7 @@ export function MapView({
           elementType: "labels.text.stroke",
           stylers: [{ color: "#000000" }, { lightness: 13 }],
         },
-        // Water - subtle blue
+        // water, subtle blue
         {
           featureType: "water",
           elementType: "geometry",
@@ -117,7 +117,7 @@ export function MapView({
           elementType: "labels.text.fill",
           stylers: [{ color: "#60a5fa" }, { lightness: 10 }],
         },
-        // Roads - light gray with blue accents
+        // roads, light gray with blue accents
         {
           featureType: "road.highway",
           elementType: "geometry.fill",
@@ -148,7 +148,7 @@ export function MapView({
           elementType: "labels",
           stylers: [{ visibility: "simplified" }],
         },
-        // Parks/Green spaces - subtle dark green
+        // parks/green spaces, subtle dark green
         {
           featureType: "poi.park",
           elementType: "geometry",
@@ -159,7 +159,7 @@ export function MapView({
           elementType: "labels.text.fill",
           stylers: [{ color: "#6b7280" }],
         },
-        // Buildings - dark gray
+        // buildings, dark gray
         {
           featureType: "poi",
           elementType: "geometry",
@@ -169,12 +169,12 @@ export function MapView({
           featureType: "poi",
           stylers: [{ visibility: "off" }],
         },
-        // Transit - hide
+        // transit, hide
         {
           featureType: "transit",
           stylers: [{ visibility: "off" }],
         },
-        // Labels - subtle
+        // labels, subtle
         {
           featureType: "administrative",
           elementType: "labels.text.fill",
@@ -185,7 +185,7 @@ export function MapView({
           elementType: "labels.text.stroke",
           stylers: [{ color: "#000000" }, { lightness: 13 }],
         },
-        // Hide district/neighborhood names
+        // hide district/neighborhood names
         {
           featureType: "administrative.locality",
           elementType: "labels",
@@ -207,7 +207,7 @@ export function MapView({
     mapInstanceRef.current = map
   }, [mapsLoaded])
 
-  // Use external coords if provided, otherwise get from geolocation
+  // use external coords if provided, otherwise get from geolocation
   useEffect(() => {
     if (externalUserCoords) {
       setUserLocation(externalUserCoords)
@@ -229,14 +229,14 @@ export function MapView({
     }
   }, [externalUserCoords, onLocationFound])
 
-  // Show photographer marker when searching OR after found
+  // show photographer marker when searching or after found
   const showPhotographer = isSearching || photographerFound
 
-  // Update user marker with pulsing animation
+  // update user marker with pulsing animation
   useEffect(() => {
     if (!mapsLoaded || !mapInstanceRef.current || !userLocation || typeof window === "undefined" || !window.google) return
 
-    // Create slow, relaxed pulsing circle overlay for user location only
+    // create slow, relaxed pulsing circle overlay for user location only
     const pulseCircle = new window.google.maps.Circle({
       strokeColor: "#3b82f6",
       strokeOpacity: 0.3,
@@ -248,19 +248,19 @@ export function MapView({
       radius: 60, // meters
     })
 
-    // Slow, relaxed pulse animation
+    // slow, relaxed pulse animation
     let radius = 60
     let growing = true
     const animatePulse = () => {
       if (growing) {
-        radius += 1 // Slower growth
+        radius += 1 // slower growth
         if (radius > 120) growing = false
       } else {
-        radius -= 1 // Slower shrink
+        radius -= 1 // slower shrink
         if (radius < 60) growing = true
       }
       pulseCircle.setRadius(radius)
-      // Use setTimeout for slower animation instead of requestAnimationFrame
+      // use settimeout for slower animation instead of requestanimationframe
       setTimeout(() => animatePulse(), 50) // ~20fps instead of 60fps
     }
     animatePulse()
@@ -290,7 +290,7 @@ export function MapView({
     }
   }, [mapsLoaded, userLocation])
 
-  // Update photographer marker with camera icon
+  // update photographer marker with camera icon
   useEffect(() => {
     if (!mapsLoaded || !mapInstanceRef.current || typeof window === "undefined" || !window.google) {
       if (photographerMarkerRef.current) {
@@ -308,14 +308,14 @@ export function MapView({
       return
     }
 
-    // Create photographer marker - same size as user marker core (scale 10)
+    // create photographer marker, same size as user marker core (scale 10)
     const cameraIcon = {
       path: window.google.maps.SymbolPath.CIRCLE,
-      scale: 10, // Match user marker size
-      fillColor: "#eab308", // Yellow-500
+      scale: 10, // match user marker size
+      fillColor: "#eab308", // yellow-500
       fillOpacity: 1,
       strokeColor: "#ffffff",
-      strokeWeight: 3, // Same as user marker
+      strokeWeight: 3, // same as user marker
     }
 
     if (!photographerMarkerRef.current) {
@@ -323,7 +323,7 @@ export function MapView({
         position: photographerCoords,
         map: mapInstanceRef.current,
         icon: cameraIcon,
-        zIndex: 1001, // Above user marker
+        zIndex: 1001, // above user marker
         animation: window.google.maps.Animation.DROP,
         title: "Photographer",
       })
@@ -333,7 +333,7 @@ export function MapView({
     }
   }, [mapsLoaded, photographerCoords, showPhotographer])
 
-  // Fit bounds to show both markers (Uber-style)
+  // fit bounds to show both markers (uber-style)
   useEffect(() => {
     if (!mapsLoaded || !mapInstanceRef.current || !userLocation || typeof window === "undefined" || !window.google) return
 
@@ -348,13 +348,13 @@ export function MapView({
     }
 
     if (bounds.isEmpty()) {
-      // If only one marker, center on it with default zoom
+      // if only one marker, center on it with default zoom
       mapInstanceRef.current.setCenter(userLocation)
       mapInstanceRef.current.setZoom(15)
       return
     }
 
-    // Initial fit with maximum safe padding
+    // initial fit with maximum safe padding
     const padding = {
       top: 220,
       right: 50,
@@ -364,22 +364,22 @@ export function MapView({
     
     mapInstanceRef.current.fitBounds(bounds, padding)
 
-    // After initial fit, zoom in slightly once match is established
+    // after initial fit, zoom in slightly once match is established
     const listener = window.google.maps.event.addListener(mapInstanceRef.current, 'bounds_changed', () => {
       const currentZoom = mapInstanceRef.current.getZoom()
       
-      // Initial zoom out to ensure visibility
+      // initial zoom out to ensure visibility
       if (currentZoom > 11.5) {
         mapInstanceRef.current.setZoom(11.5)
       }
       
-      // Once photographer is found, keep zoomed out (no additional zoom in)
+      // once photographer is found, keep zoomed out (no additional zoom in)
       if (showPhotographer && photographerCoords) {
         setTimeout(() => {
-          const finalZoom = Math.min(11.5, mapInstanceRef.current.getZoom()) // Keep at 11.5 or less
+          const finalZoom = Math.min(11.5, mapInstanceRef.current.getZoom()) // keep at 11.5 or less
           mapInstanceRef.current.setZoom(finalZoom)
           
-          // Re-fit with slightly less padding for better view
+          // re-fit with slightly less padding for better view
           const finalBounds = new window.google.maps.LatLngBounds()
           if (userLocation) finalBounds.extend(userLocation)
           if (photographerCoords) finalBounds.extend(photographerCoords)
@@ -390,10 +390,10 @@ export function MapView({
             bottom: 230,
             left: 45,
           })
-        }, 500) // Wait 500ms after match
+        }, 500) // wait 500ms after match
       }
       
-      // Safety check - ensure both markers are still visible
+      // safety check, ensure both markers are still visible
       setTimeout(() => {
         const viewportBounds = mapInstanceRef.current.getBounds()
         const userInView = viewportBounds?.contains(userLocation)
@@ -402,7 +402,7 @@ export function MapView({
           : true
         
         if (!userInView || !photographerInView) {
-          // If markers out of view, zoom out and re-fit
+          // if markers out of view, zoom out and re-fit
           mapInstanceRef.current.setZoom(12)
           const safetyBounds = new window.google.maps.LatLngBounds()
           if (userLocation) safetyBounds.extend(userLocation)
@@ -415,7 +415,7 @@ export function MapView({
     })
   }, [mapsLoaded, userLocation, photographerCoords, showPhotographer])
 
-  // Draw route from photographer to client (violet color - matching RAW DSLR)
+  // draw route from photographer to client (violet color, matching raw dslr)
   useEffect(() => {
     if (!mapsLoaded || !mapInstanceRef.current || !userLocation || !photographerCoords || !showPhotographer || typeof window === "undefined" || !window.google) {
       if (routePolylineRef.current) {
@@ -425,12 +425,12 @@ export function MapView({
       return
     }
 
-    // Remove existing route
+    // remove existing route
     if (routePolylineRef.current) {
       routePolylineRef.current.setMap(null)
     }
 
-    // Create a smooth curved path between photographer and client
+    // create a smooth curved path between photographer and client
     const createCurvedPath = (start: { lat: number; lng: number }, end: { lat: number; lng: number }) => {
       const midLat = (start.lat + end.lat) / 2
       const midLng = (start.lng + end.lng) / 2
@@ -453,7 +453,7 @@ export function MapView({
 
     const path = createCurvedPath(photographerCoords, userLocation)
 
-    // Create polyline with violet color (matching RAW DSLR accent: violet-400)
+    // create polyline with violet color (matching raw dslr accent: violet-400)
     routePolylineRef.current = new window.google.maps.Polyline({
       path: [],
       geodesic: true,
@@ -464,7 +464,7 @@ export function MapView({
       zIndex: 500,
     })
 
-    // Animate the route drawing smoothly from photographer to client
+    // animate the route drawing smoothly from photographer to client
     let currentIndex = 0
     const animateRoute = () => {
       if (currentIndex < path.length && routePolylineRef.current) {

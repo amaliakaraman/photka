@@ -16,7 +16,7 @@ import { StaticLogo } from "@/components/StaticLogo"
 function getContextualHint(
   weather?: { condition: string; temp: number; isGood: boolean }
 ): { icon: string; text: string } | null {
-  // Get CST time
+  // get cst time
   const now = new Date()
   const cstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" }))
   const hour = cstTime.getHours()
@@ -24,7 +24,7 @@ function getContextualHint(
   const timeInMinutes = hour * 60 + minute
   const day = cstTime.getDay() // 0 = Sunday, 6 = Saturday
   
-  // Helper to randomly select from array
+  // helper to randomly select from array
   const random = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]
   
   if (day === 0 || day === 6) {
@@ -34,12 +34,12 @@ function getContextualHint(
     const condition = weather.condition.toLowerCase()
     const showWeather = Math.random() < 0.5 // 50% chance to show weather hint
     
-    // Storm - always show weather
+    // storm, always show weather
     if (condition.includes("thunderstorm") || condition.includes("severe")) {
       return { icon: "⛈️", text: "Indoors works too" }
     }
     
-    // Snow - always show weather
+    // snow, always show weather
     if (condition.includes("snow") || condition.includes("sleet")) {
       return { icon: "❄️", text: "Winter Wonderland" }
     }
@@ -49,7 +49,7 @@ function getContextualHint(
       if (showWeather) {
         return { icon: "🌧️", text: "Rain or shine" }
       }
-      // Fall through to time-based
+      // fall through to time-based
     }
     
     // Cloudy
@@ -57,53 +57,53 @@ function getContextualHint(
       if (showWeather) {
         return { icon: "☁️", text: "Soft, diffused light" }
       }
-      // Fall through to time-based
+      // fall through to time-based
     }
     
-    // Partly Cloudy
+    // partly cloudy
     if (condition.includes("partly") || condition.includes("mostly cloudy")) {
       if (showWeather) {
         return { icon: "☁️", text: "Balanced light" }
       }
-      // Fall through to time-based
+      // fall through to time-based
     }
     
-    // Sunny morning (before 12 PM)
+    // sunny morning (before 12 pm)
     if ((condition.includes("sunny") || condition.includes("clear")) && hour < 12) {
       if (showWeather) {
         const options = ["Bright start", "Morning looks good", "Start the day", "Fresh lighting"]
         return { icon: "☀️", text: random(options) }
       }
-      // Fall through to time-based
+      // fall through to time-based
     }
   }
   
   // time-based hints
-  // 5:30 PM - 10:00 PM
+  // 5:30 pm to 10:00 pm
   if (timeInMinutes >= 17 * 60 + 30 && timeInMinutes < 22 * 60) {
     const options = ["Proof of tonight", "Capture tonight"]
     return { icon: "🌙", text: random(options) }
   }
   
-  // 4:30 PM - 5:30 PM
+  // 4:30 pm to 5:30 pm
   if (timeInMinutes >= 16 * 60 + 30 && timeInMinutes < 17 * 60 + 30) {
     const options = ["Evening starts soon", "Before the night", "Worth remembering"]
     return { icon: "🌅", text: random(options) }
   }
   
-  // 2:30 PM - 4:30 PM
+  // 2:30 pm to 4:30 pm
   if (timeInMinutes >= 14 * 60 + 30 && timeInMinutes < 16 * 60 + 30) {
     const options = ["Sunset shoots", "Last light window"]
     return { icon: "🌅", text: random(options) }
   }
   
-  // 12:00 PM - 2:30 PM
+  // 12:00 pm to 2:30 pm
   if (timeInMinutes >= 12 * 60 && timeInMinutes < 14 * 60 + 30) {
     const options = ["Beautiful day for photos", "Easy photo hour", "Midday window"]
     return { icon: "☀️", text: random(options) }
   }
   
-  // Morning (before 12 PM)
+  // morning (before 12 pm)
   if (hour < 12) {
     const options = ["Bright start", "Morning looks good", "Start the day", "Fresh lighting"]
     return { icon: "☀️", text: random(options) }
@@ -122,7 +122,7 @@ const galleryImages = [
   "/photkapic6.jpg",
 ]
 
-// Live activity feed items
+// live activity feed items
 const recentActivity = [
   { name: "Emma", action: "booked", type: "iPhone Session", time: "2 min ago" },
   { name: "James", action: "completed", type: "RAW DSLR", time: "15 min ago" },
@@ -138,9 +138,9 @@ export default function HomePage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [showLoading, setShowLoading] = useState(false)
   const [loadingComplete, setLoadingComplete] = useState(false)
+  const [contextHint, setContextHint] = useState<{ icon: string; text: string } | null>(null)
   
   const greeting = getGreeting()
-  const contextHint = getContextualHint(weather || undefined)
   const displayName = user?.user_metadata?.full_name?.split(" ")[0] || 
                       user?.email?.split("@")[0] || 
                       null
@@ -164,15 +164,20 @@ export default function HomePage() {
     setLoadingComplete(true)
   }
 
-  // Update time every minute to refresh contextual hints
+  // calculate context hint on client side only to avoid hydration mismatch
+  useEffect(() => {
+    setContextHint(getContextualHint(weather || undefined))
+  }, [weather, currentTime])
+
+  // update time every minute to refresh contextual hints
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date())
-    }, 60000) // Update every minute
+    }, 60000) // update every minute
     return () => clearInterval(interval)
   }, [])
 
-  // Rotate activity feed
+  // rotate activity feed
   useEffect(() => {
     const interval = setInterval(() => {
       setActivityIndex((prev) => (prev + 1) % recentActivity.length)
@@ -180,11 +185,11 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch weather data from National Weather Service (default to Nashville)
+  // fetch weather data from national weather service (default to nashville)
   useEffect(() => {
     async function fetchWeather() {
       try {
-        // Step 1: Get grid point from lat/lon
+        // step 1: get grid point from lat/lon
         const pointsResponse = await fetch(
           `https://api.weather.gov/points/${THE_GULCH.lat},${THE_GULCH.lng}`,
           {
@@ -205,7 +210,7 @@ export default function HomePage() {
           throw new Error("No forecast URL found")
         }
 
-        // Step 2: Get current forecast
+        // step 2: get current forecast
         const forecastResponse = await fetch(forecastUrl, {
           headers: {
             'User-Agent': 'Photka App (contact@photka.com)'
@@ -224,7 +229,7 @@ export default function HomePage() {
           const temp = currentPeriod.temperature || 70
           const isDaytime = currentPeriod.isDaytime
           
-          // Determine if weather is good for photos
+          // determine if weather is good for photos
           const isGood = condition.includes("sunny") || 
                         condition.includes("clear") ||
                         (condition.includes("partly") && condition.includes("cloudy")) ||
@@ -233,14 +238,14 @@ export default function HomePage() {
           setWeather({ condition, temp, isGood })
         }
       } catch {
-        // Fail silently - weather is optional
+        // fail silently, weather is optional
       }
     }
 
     fetchWeather()
   }, [])
 
-  // Fetch most recent booking
+  // fetch most recent booking
   useEffect(() => {
     async function fetchRecentBooking() {
       if (!user?.email) {
@@ -273,7 +278,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white pb-28 relative overflow-hidden">
       
-      {/* Noise texture overlay */}
+      {/* noise texture overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-[0.012] z-50"
         style={{
@@ -281,7 +286,7 @@ export default function HomePage() {
         }}
       />
 
-      {/* Ambient gradient orbs */}
+      {/* ambient gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute -top-48 -right-48 w-[500px] h-[500px] rounded-full bg-blue-500/15 blur-[120px]"
@@ -313,7 +318,7 @@ export default function HomePage() {
 
       <div className="max-w-lg mx-auto px-6 relative z-10">
         
-        {/* Hero Header */}
+        {/* hero header */}
         <motion.header 
           className="pt-20 pb-10 flex items-start justify-between"
           initial={{ opacity: 0, y: -20 }}
@@ -330,7 +335,7 @@ export default function HomePage() {
             </span>
           </h1>
           
-          {/* Contextual hint */}
+          {/* contextual hint */}
           {contextHint && (
             <motion.div 
               className="mt-6 inline-flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-2"
@@ -350,7 +355,7 @@ export default function HomePage() {
           )}
         </motion.header>
 
-        {/* Live Activity Ticker */}
+        {/* live activity ticker */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -375,7 +380,7 @@ export default function HomePage() {
           </motion.div>
         </motion.div>
 
-        {/* Active Booking Banner */}
+        {/* active booking banner */}
         {!loadingBooking && recentBooking && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -417,7 +422,7 @@ export default function HomePage() {
           </motion.div>
         )}
 
-        {/* Shoot Now Section */}
+        {/* shoot now section */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -432,7 +437,7 @@ export default function HomePage() {
             <span className="text-xs text-blue-400 tracking-wide pb-1">Swipe →</span>
           </div>
           
-          {/* Session Cards */}
+          {/* session cards */}
           <div className="flex gap-5 overflow-x-auto pt-4 pb-4 -mx-6 px-6 scrollbar-hide">
             {SESSION_KEYS.map((key, index) => {
               const session = SESSIONS[key]
@@ -450,7 +455,7 @@ export default function HomePage() {
                     whileHover={{ y: -4, transition: { duration: 0.25 } }}
                     className="relative h-full"
                   >
-                    {/* Popular badge - positioned outside card */}
+                    {/* popular badge, positioned outside card */}
                     {isPopular && (
                       <div className="absolute -top-3 left-5 z-10">
                         <span className="bg-gradient-to-r from-amber-400 to-yellow-300 text-black text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/20">
@@ -459,9 +464,9 @@ export default function HomePage() {
                       </div>
                     )}
                     
-                    {/* Card */}
+                    {/* card */}
                     <div className="relative bg-white/[0.025] backdrop-blur-2xl border border-white/[0.06] rounded-3xl p-6 h-full group-hover:border-blue-500/20 group-hover:bg-white/[0.04] transition-all duration-300 overflow-hidden">
-                      {/* Hover glow - inside card */}
+                      {/* hover glow, inside card */}
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       
                       <div className="relative">
@@ -481,7 +486,7 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Shoot Later Section */}
+        {/* shoot later section */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -495,7 +500,7 @@ export default function HomePage() {
           
           <Link href="/schedule" className="block group">
             <div className="relative overflow-hidden bg-white/[0.025] backdrop-blur-2xl border border-white/[0.06] rounded-3xl p-6 hover:border-white/[0.1] hover:bg-white/[0.04] transition-all duration-300">
-              {/* Subtle gradient accent */}
+              {/* subtle gradient accent */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-blue-500/8 to-transparent rounded-full blur-2xl" />
               
               <div className="relative flex items-center justify-between">
@@ -518,7 +523,7 @@ export default function HomePage() {
           </Link>
         </motion.section>
 
-        {/* Photka Shots Today Gallery - above featured photographers */}
+        {/* photka shots today gallery, above featured photographers */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -557,14 +562,14 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Divider */}
+        {/* divider */}
         <div className="flex items-center gap-6 mb-12">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           <span className="text-[11px] text-neutral-500 uppercase tracking-[0.2em]">Featured Photographers</span>
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
         </div>
 
-        {/* Featured Photographers */}
+        {/* featured photographers */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -588,7 +593,7 @@ export default function HomePage() {
                       alt={photographer.name}
                       className="w-16 h-16 rounded-full object-cover ring-2 ring-white/[0.06] group-hover:ring-white/[0.12] transition-all"
                     />
-                    {/* Online indicator */}
+                    {/* online indicator */}
                     <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full border-[2.5px] border-black" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -619,10 +624,10 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Divider */}
+        {/* divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent mb-12" />
 
-        {/* Referral Card */}
+        {/* referral card */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -630,7 +635,7 @@ export default function HomePage() {
           className="mb-14"
         >
           <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-blue-600/5 to-cyan-500/10 border border-white/[0.06] rounded-3xl p-6">
-            {/* Decorative orb */}
+            {/* decorative orb */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl" />
             
             <div className="relative flex items-center justify-between">
@@ -654,7 +659,7 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Stats Footer */}
+        {/* stats footer */}
         <motion.footer
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
