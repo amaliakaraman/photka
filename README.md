@@ -8,6 +8,12 @@ on-demand photography booking platform.
 
 photka connects users with professional photographers in nashville, tennessee. book instant sessions or schedule ahead, choose your session type, and get your photos delivered the way you want them.
 
+## demo
+
+https://github.com/user-attachments/assets/2d4b0f35-a84b-470e-91ee-8bacbdb334a8
+
+
+
 ## why i built this
 
 after running nashphotoco in nashville for over five years, i noticed how outdated the photography booking process really is. working directly with clients showed me the gaps in how people struggle to book photographers, communicate during shoots, and receive their photos. a huge shift i noticed is how the modern social media landscape has changed people's priorities in photo delivery, emphasizing speed for content and the freedom to edit photos how they want to align with their personal or business branding. photo editing isn't exclusive to photographers anymore as everyone captures and edits photos 24/7. the real difficulty now is finding someone to actually take the photos. that's what inspired photka: a streamlined, api-driven core for photography bookings and delivery that gives people fast access to photographers and full control over their final images, with the option to have them edited if desired. this project blends my creative background with engineering, creating something that's more intuitive for both photographers and clients.
