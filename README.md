@@ -88,8 +88,6 @@ run the sql scripts from the `database/` folder in your supabase sql editor:
 - `supabase_rls_policy.sql` — row level security policies
 - `fix_support_messages_final.sql` — support chat configuration
 
-see `AI_CHATBOT_SETUP.md` for detailed ai chatbot setup instructions.
-
 
 
 ## project structure
