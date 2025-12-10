@@ -219,7 +219,7 @@ remember: you're helpful, you're human, and you genuinely want to help them get 
           
           if (error?.error?.code === "insufficient_quota") {
             errorMessage = "ai service quota exceeded. please check your openai billing or contact support."
-            console.error("⚠️ openai quota exceeded - account needs billing setup or more credits. visit https://platform.openai.com/account/billing")
+            console.error("openai quota exceeded - account needs billing setup or more credits. visit https://platform.openai.com/account/billing")
           } else if (error?.error?.code === "invalid_api_key") {
             errorMessage = "ai service configuration error. please contact support."
           } else if (error?.error?.message) {
