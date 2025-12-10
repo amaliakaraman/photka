@@ -70,7 +70,7 @@ export function MapView({
       }
     }
     script.onerror = () => {
-      console.error('Failed to load Google Maps API. Check your API key and ensure Maps JavaScript API is enabled.')
+      // Failed to load Google Maps API
     }
     script.id = 'google-maps-script'
     document.head.appendChild(script)

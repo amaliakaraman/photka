@@ -72,7 +72,6 @@ export default function ActivityPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error("error cancelling booking via API:", errorData)
         alert(`failed to cancel booking: ${errorData.error || "please try again"}`)
         setIsCancelling(false)
         return
@@ -89,7 +88,6 @@ export default function ActivityPage() {
         ))
       }
     } catch (error) {
-      console.error("error cancelling booking:", error)
       alert("failed to cancel booking. please try again.")
       setIsCancelling(false)
       return
@@ -583,7 +581,7 @@ export default function ActivityPage() {
             </svg>
           </div>
 
-          {/* Filter Dropdown */}
+          {/* filter dropdown */}
           <div className="relative">
             <select
               value={filterType}
@@ -840,11 +838,11 @@ export default function ActivityPage() {
         )}
       </div>
 
-      {/* Manage Booking Sheet */}
+      {/* manage booking sheet */}
       <AnimatePresence>
         {showManageSheet && selectedBooking && (
           <>
-            {/* Backdrop */}
+            {/* backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -856,7 +854,7 @@ export default function ActivityPage() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             />
 
-            {/* Sheet */}
+            {/* sheet */}
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -864,14 +862,14 @@ export default function ActivityPage() {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 bg-neutral-900 border-t border-white/[0.08] rounded-t-3xl overflow-hidden"
             >
-              {/* Handle */}
+              {/* handle */}
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
 
               {!showCancelConfirm ? (
                 <div className="px-5 pb-8">
-                  {/* Booking Summary */}
+                  {/* booking summary */}
                   <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/[0.06]">
                     <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
                       <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -889,9 +887,9 @@ export default function ActivityPage() {
                     </span>
                   </div>
 
-                  {/* Actions */}
+                  {/* actions */}
                   <div className="space-y-2">
-                    {/* View Details */}
+                    {/* view details */}
                     <button
                       onClick={() => {
                         setShowManageSheet(false)
@@ -914,7 +912,7 @@ export default function ActivityPage() {
                       </svg>
                     </button>
 
-                    {/* Message */}
+                    {/* message */}
                     <button
                       onClick={() => {
                         setShowManageSheet(false)
@@ -936,7 +934,7 @@ export default function ActivityPage() {
                       </svg>
                     </button>
 
-                    {/* Reschedule */}
+                    {/* reschedule */}
                     {(selectedBooking.status === "requested" || selectedBooking.status === "scheduled" || selectedBooking.status === "confirmed") && (
                       <button
                         onClick={handleReschedule}
@@ -957,7 +955,7 @@ export default function ActivityPage() {
                       </button>
                     )}
 
-                    {/* Cancel */}
+                    {/* cancel */}
                     {(selectedBooking.status === "requested" || selectedBooking.status === "scheduled" || selectedBooking.status === "confirmed") && (
                       <button
                         onClick={() => setShowCancelConfirm(true)}
@@ -979,7 +977,7 @@ export default function ActivityPage() {
                     )}
                   </div>
 
-                  {/* Close button */}
+                  {/* close button */}
                   <button
                     onClick={() => setShowManageSheet(false)}
                     className="w-full mt-4 py-3 text-sm text-neutral-400 hover:text-white transition"
@@ -988,7 +986,7 @@ export default function ActivityPage() {
                   </button>
                 </div>
               ) : (
-                /* Cancel Confirmation */
+                /* cancel confirmation */
                 <div className="px-5 pb-8">
                   <div className="text-center mb-6">
                     <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">

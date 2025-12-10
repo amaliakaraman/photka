@@ -41,7 +41,6 @@ function MessagesContent() {
         .order("created_at", { ascending: false })
 
       if (bookingsError) {
-        console.error("Error fetching bookings:", bookingsError)
         return
       }
 
@@ -136,7 +135,6 @@ function MessagesContent() {
         window.dispatchEvent(new CustomEvent('photka_messages_unread_update', { detail: totalUnread }))
       }
     } catch (error) {
-      console.error("Error fetching conversations:", error)
       setLoadingConversations(false)
     }
   }, [user])

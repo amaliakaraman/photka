@@ -155,10 +155,9 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
         let errorMessage = "I'm having trouble responding right now. Please try again in a moment."
         try {
           const errorData = await response.json()
-          console.error("AI response error:", response.status, errorData)
           errorMessage = getErrorMessage(errorData)
         } catch {
-          console.error("AI response error (could not parse):", response.status)
+          // Error parsing failed, use default message
         }
         const errorMsg = createMessage(
           `error-${Date.now()}`,
@@ -169,7 +168,6 @@ export function SupportChatView({ onBack }: SupportChatViewProps) {
         setMessages(prev => [...prev, errorMsg])
       }
     } catch (error) {
-      console.error("AI chat error:", error)
       const errorMsg = createMessage(
         `error-${Date.now()}`,
         supportBookingId,

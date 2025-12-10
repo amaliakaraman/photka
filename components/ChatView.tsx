@@ -68,7 +68,6 @@ export function ChatView({ bookingId, onBack, onMessageSent }: ChatViewProps) {
         .order("created_at", { ascending: true })
 
       if (error) {
-        console.error("Error fetching messages:", error)
         return
       }
 
@@ -97,7 +96,6 @@ export function ChatView({ bookingId, onBack, onMessageSent }: ChatViewProps) {
         }
       }
     } catch (error) {
-      console.error("Error fetching messages:", error)
       setLoading(false)
     }
   }, [user, bookingId])
@@ -173,7 +171,6 @@ export function ChatView({ bookingId, onBack, onMessageSent }: ChatViewProps) {
         .single()
 
       if (error) {
-        console.error("Error sending message:", error)
         alert("Failed to send message. Please try again.")
       } else {
         setNewMessage("")
@@ -182,7 +179,6 @@ export function ChatView({ bookingId, onBack, onMessageSent }: ChatViewProps) {
         scrollToBottom()
       }
     } catch (error) {
-      console.error("Error sending message:", error)
       alert("Failed to send message. Please try again.")
     } finally {
       setSending(false)
